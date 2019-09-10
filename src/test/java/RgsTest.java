@@ -5,10 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
@@ -17,7 +14,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -38,7 +34,6 @@ public class RgsTest {
      */
     private static WebDriver driver = null;
     private static Map<WebElement, String> enterValues = null;
-    private static RgsTest rgsTest;
 
     @Parameterized.Parameter
     public String firstName;
@@ -65,24 +60,21 @@ public class RgsTest {
                 break;
         }
 
-        enterValues = new HashMap<WebElement, String>();
+        enterValues = new HashMap<>();
         driver.manage().window().maximize();
-
-        rgsTest = PageFactory.initElements(driver, RgsTest.class);
 
         driver.navigate().to("http://www.rgs.ru");
 
-        WebElement strahovanie = driver.findElement(By.xpath("//a[@class='hidden-xs'][contains(text(), 'Меню')]"));
-        strahovanie.click();
+        driver.findElement(By.xpath("//a[@class='hidden-xs'][contains(text(), 'Меню')]")).click();
 
-        WebElement dms = strahovanie.findElement(By.xpath("//a[contains(text(), 'ДМС')]"));
-        dms.click();
+        driver.findElement(By.xpath("//a[contains(text(), 'ДМС')][ancestor::form]")).click();
 
         try {
             driver.findElement(By.xpath("//h1[contains(text(), 'добровольное медицинское страхование')]"));
             System.out.println("Заголовок существует");
         } catch (NoSuchElementException ex) {
             System.out.println("Заголовок не найден");
+            Assert.fail("Заголовок не найден");
         }
 
         WebElement buttonOk = driver.findElement(By.xpath("//a[@class=\"btn btn-default text-uppercase hidden-xs adv-analytics-navigation-desktop-floating-menu-button\"]"));
@@ -124,8 +116,8 @@ public class RgsTest {
                 driver.findElement(By.xpath("//span[@class=\"validation-error-text\"][ancestor::div[@class='form-group col-md-6 col-xs-12 validation-group-has-error']]")).getAttribute("innerText"));
     }
 
-    @After
-    public void stopTest() throws Exception {
+    @AfterClass
+    public static void stopTest() throws Exception {
         driver.quit();
     }
 
@@ -134,7 +126,7 @@ public class RgsTest {
         WebElement webElement = driver.findElement(locator);
         WebDriverWait elementWaiter = new WebDriverWait(driver, 50, 1000);
         String elementValue = value;
-        ;
+
         switch (element) {
             case "text":
                 elementWaiter.until(ExpectedConditions.elementToBeClickable(locator));
@@ -154,12 +146,16 @@ public class RgsTest {
                 enterValues.put(webElement, idValue);
                 break;
             case "checkBox":
-                webElement.click();
+                if ( !webElement.isSelected() )
+                {
+                    webElement.click();
+                }
+
                 enterValues.put(webElement, elementValue);
                 break;
             default:
                 System.out.println("Нет такого элемента");
-
+                Assert.fail("Элемент " + element + " не найден");
         }
 
 
