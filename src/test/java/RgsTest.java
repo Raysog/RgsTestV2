@@ -4,16 +4,20 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.net.UrlChecker.TimeoutException;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -120,18 +124,58 @@ public class RgsTest {
         driver.quit();
     }
 
+    //mvn clean test -Ddriver=chrome
+    
+    public static ExpectedCondition<WebElement> elementIsEnabled(final WebElement element) {
+        return new ExpectedCondition<WebElement>() {
+
+          @Override
+          public WebElement apply(WebDriver driver) {
+            WebElement visibleElement = visibilityOf(element).apply(driver);
+            try {
+              if (visibleElement != null && visibleElement.isEnabled()) {
+                return visibleElement;
+              }
+              return null;
+            } catch (StaleElementReferenceException e) {
+              return null;
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "element to be clickable: " + element;
+          }
+        };
+      }
+    
     private void addElement(String element, String xpath, String value, String idValue) {
         By locator = By.xpath(xpath);
         WebElement webElement = driver.findElement(locator);
         WebDriverWait elementWaiter = new WebDriverWait(driver, 50, 1000);
         String elementValue = value;
-
+        System.out.println(element + " is enabled: " + webElement.isEnabled());
+        System.out.println(element + " is selected: " + webElement.isSelected());
+        System.out.println(element + " is Displayed: " + webElement.isDisplayed());
+        System.out.println(element + " getText: " + webElement.getText());
+        elementWaiter.until(ExpectedConditions.elementIsEnabled(webElement));
+        
         switch (element) {
             case "text":
-                elementWaiter.until(ExpectedConditions.elementToBeClickable(locator));
-                while(!webElement.getAttribute("value").equals(elementValue)) {
-                	webElement.clear();
-                    webElement.sendKeys(elementValue);
+            	
+                double endTime = System.currentTimeMillis() + 30000;
+                boolean flag = false;
+                while(System.currentTimeMillis() < endTime) {
+                	if (!webElement.getAttribute("value").equals(elementValue)) {
+                		webElement.clear();
+                    	webElement.sendKeys(elementValue);
+                	} else {
+                		flag = true;
+                		break;
+                	}
+                }
+                if (!flag) {
+                	Assert.fail();
                 }
                 enterValues.put(webElement, elementValue);
                 break;
@@ -147,6 +191,7 @@ public class RgsTest {
                 enterValues.put(webElement, idValue);
                 break;
             case "checkBox":
+            	
                 if ( !webElement.isSelected() )
                 {
                     webElement.click();
