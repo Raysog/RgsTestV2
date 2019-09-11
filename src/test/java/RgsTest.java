@@ -34,7 +34,6 @@ public class RgsTest {
      */
     private static WebDriver driver;
     private static Map<WebElement, String> enterValues = new HashMap<>();
-    private static int counter = 0;
 
     @Parameterized.Parameter
     public String firstName;
@@ -118,8 +117,7 @@ public class RgsTest {
 
     @AfterClass
     public static void stopTest() throws Exception {
-    	System.out.println("counter = " + counter);
-        //driver.quit();
+        driver.quit();
     }
 
     private void addElement(String element, String xpath, String value, String idValue) {
@@ -134,7 +132,6 @@ public class RgsTest {
                 while(!webElement.getAttribute("value").equals(elementValue)) {
                 	webElement.clear();
                     webElement.sendKeys(elementValue);
-                    counter++;
                 }
                 enterValues.put(webElement, elementValue);
                 break;
