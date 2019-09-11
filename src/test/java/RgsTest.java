@@ -32,8 +32,9 @@ public class RgsTest {
     /**
      * @param args
      */
-    private static WebDriver driver = null;
-    private static Map<WebElement, String> enterValues = null;
+    private static WebDriver driver;
+    private static Map<WebElement, String> enterValues = new HashMap<>();
+    private static int counter = 0;
 
     @Parameterized.Parameter
     public String firstName;
@@ -57,10 +58,10 @@ public class RgsTest {
                 driver = new FirefoxDriver();
             default:
                 System.out.println("Нет такого браузера");
+                Assert.fail("Нет такого браузера");
                 break;
         }
 
-        enterValues = new HashMap<>();
         driver.manage().window().maximize();
 
         driver.navigate().to("http://www.rgs.ru");
@@ -77,8 +78,7 @@ public class RgsTest {
             Assert.fail("Заголовок не найден");
         }
 
-        WebElement buttonOk = driver.findElement(By.xpath("//a[@class=\"btn btn-default text-uppercase hidden-xs adv-analytics-navigation-desktop-floating-menu-button\"]"));
-        buttonOk.click();
+        driver.findElement(By.xpath("//a[@class=\"btn btn-default text-uppercase hidden-xs adv-analytics-navigation-desktop-floating-menu-button\"]")).click();
 
     }
 
@@ -118,7 +118,8 @@ public class RgsTest {
 
     @AfterClass
     public static void stopTest() throws Exception {
-        driver.quit();
+    	System.out.println("counter = " + counter);
+        //driver.quit();
     }
 
     private void addElement(String element, String xpath, String value, String idValue) {
@@ -130,8 +131,11 @@ public class RgsTest {
         switch (element) {
             case "text":
                 elementWaiter.until(ExpectedConditions.elementToBeClickable(locator));
-                webElement.clear();
-                webElement.sendKeys(elementValue);
+                while(!webElement.getAttribute("value").equals(elementValue)) {
+                	webElement.clear();
+                    webElement.sendKeys(elementValue);
+                    counter++;
+                }
                 enterValues.put(webElement, elementValue);
                 break;
             case "phone":
